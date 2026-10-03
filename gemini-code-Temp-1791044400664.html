@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TUMAO - MAGISCHE KATZE</title>
+    <style>
+        /* 1. 基礎設定 */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { width: 100vw; height: 100vh; overflow: hidden; background-color: #000; font-family: 'Arial', sans-serif; }
+
+        /* 2. 前導畫面 */
+        #enter-screen {
+            position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: #000; color: #fff; display: flex; justify-content: center; align-items: center;
+            z-index: 9999; cursor: pointer; font-size: 1.5vw; letter-spacing: 0.3vw; transition: opacity 0.8s ease;
+        }
+
+        /* 3. 影片與靜態裝飾層 */
+        #bg-video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; pointer-events: none; }
+        .static-img { position: absolute; z-index: 10; pointer-events: none; }
+        #logo-left { bottom: 6%; left: 3%; width: 25vw; }
+        #menu-right { right: 0; top: 0; height: 100vh; width: auto; }
+
+        /* 4. 互動按鈕層 */
+        .interactive-btn { position: absolute; z-index: 20; cursor: pointer; }
+        #music-toggle { top: 8%; left: 5%; width: 12vw; transition: transform 0.2s ease; }
+        #music-toggle:hover { transform: scale(1.1); }
+        #music-toggle img { width: 100%; }
+
+        .page-link { display: block; }
+        .page-link img { position: absolute; top: 0; left: 0; width: 100%; transition: opacity 0.3s ease; }
+        .page-link .img-hover { opacity: 0; }
+        .page-link:hover .img-normal { opacity: 0; }
+        .page-link:hover .img-hover { opacity: 1; }
+
+        #btn-character { top: 15%; right: 20%; width: 16vw; height: 4vw; }
+        #btn-information { top: 43%; left: 30%; width: 18vw; height: 4.5vw; }
+        #btn-discover { top: 56%; right: 16%; width: 16vw; height: 4vw; }
+
+        /* =========================================
+           5. 🔥 臨時分頁面板 (Character)
+           ========================================= */
+        #panel-character {
+            position: absolute;
+            top: 0;
+            right: -100vw; /* 初始狀態：隱藏在畫面右側外 */
+            width: 100vw;
+            height: 100vh;
+            background-color: transparent; /* 🔥 已修改：設定為透明，讓邊緣透出主畫面 */
+            z-index: 5000; /* 確保浮在所有主畫面元素之上 */
+            transition: right 0.6s cubic-bezier(0.25, 1, 0.5, 1); /* 平滑滑動特效 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 當面板被啟動時，滑入畫面 */
+        #panel-character.active {
+            right: 0;
+        }
+
+        /* 滿版圖片設定 */
+        #panel-character img.bg-temp {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* 🔥 已修改：設定為 contain，保證圖片 100% 完整不裁切 */
+        }
+
+        /* 左上角隱形的返回觸控區 (對應圖片上的返回箭頭) */
+        #back-btn-character {
+            position: absolute;
+            top: 3%;
+            left: 1%;
+            width: 15vw;
+            height: 8vw;
+            cursor: pointer;
+            z-index: 5001;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="enter-screen">[ CLICK ]</div>
+    <video id="bg-video" src="video_bg.mp4" autoplay loop muted playsinline></video>
+    <audio id="bg-music" src="TheUnboundRise.opus" loop preload="auto"></audio>
+    <img id="logo-left" src="LogoLeft.png" class="static-img" alt="TUMAO Logo">
+    <img id="menu-right" src="MenuRight.png" class="static-img" alt="Right Menu">
+
+    <div id="music-toggle" class="interactive-btn">
+        <img id="music-icon" src="Playing.png" alt="Music Toggle">
+    </div>
+
+    <!-- 主頁按鈕 -->
+    <a href="#" id="btn-character" class="interactive-btn page-link">
+        <img src="Character.png" class="img-normal" alt="Character">
+        <img src="CharacterSE.png" class="img-hover" alt="Character Hover">
+    </a>
+    <a href="#" id="btn-information" class="interactive-btn page-link">
+        <img src="Information.png" class="img-normal" alt="Information">
+        <img src="InformationSE.png" class="img-hover" alt="Information Hover">
+    </a>
+    <a href="#" id="btn-discover" class="interactive-btn page-link">
+        <img src="Discover.png" class="img-normal" alt="Discover">
+        <img src="DiscoverSE.png" class="img-hover" alt="Discover Hover">
+    </a>
+
+    <!-- Character 臨時分頁面板 -->
+    <div id="panel-character">
+        <img src="CharacterTemp.jpg" class="bg-temp" alt="Character Temp Page">
+        <!-- 隱形的點擊區域，用來觸發返回 -->
+        <div id="back-btn-character"></div>
+    </div>
+
+    <!-- 互動腳本 -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const bgVideo = document.getElementById('bg-video'); 
+            const bgMusic = document.getElementById('bg-music'); 
+            const musicToggleBtn = document.getElementById('music-toggle');
+            const musicIcon = document.getElementById('music-icon');
+            const enterScreen = document.getElementById('enter-screen');
+            
+            // 分頁面板變數
+            const btnCharacter = document.getElementById('btn-character');
+            const panelCharacter = document.getElementById('panel-character');
+            const backBtnCharacter = document.getElementById('back-btn-character');
+            
+            bgMusic.volume = 0.5; 
+            let isPlaying = false;
+
+            // 前導畫面
+            enterScreen.addEventListener('click', function() {
+                enterScreen.style.opacity = '0';
+                setTimeout(() => { enterScreen.style.display = 'none'; }, 800);
+                bgVideo.play().catch(e => console.log(e));
+                bgMusic.play().catch(e => console.log(e));
+                isPlaying = true;
+                musicIcon.src = 'Playing.png';
+            });
+
+            // 音樂開關
+            musicToggleBtn.addEventListener('click', function(e) {
+                e.stopPropagation(); 
+                if (isPlaying) {
+                    bgMusic.pause(); musicIcon.src = 'PlayStop.png'; isPlaying = false;
+                } else {
+                    bgMusic.play(); musicIcon.src = 'Playing.png'; isPlaying = true;
+                }
+            });
+
+            // 點擊 Character 按鈕，滑入面板
+            btnCharacter.addEventListener('click', function(e) {
+                e.preventDefault(); // 防止 a 標籤預設跳轉
+                panelCharacter.classList.add('active'); // 加上 active class 觸發 CSS 滑動
+            });
+
+            // 點擊面板左上角返回區塊，滑出面板
+            backBtnCharacter.addEventListener('click', function() {
+                panelCharacter.classList.remove('active'); // 移除 active class 讓它退回右側
+            });
+        });
+    </script>
+</body>
+</html>
