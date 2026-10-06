@@ -39,43 +39,69 @@
         #btn-discover { top: 56%; right: 16%; width: 16vw; height: 4vw; }
 
         /* =========================================
-           5. 🔥 臨時分頁面板 (Character)
+           5. Character 臨時分頁面板
            ========================================= */
         #panel-character {
             position: absolute;
             top: 0;
-            right: -100vw; /* 初始狀態：隱藏在畫面右側外 */
+            right: -100vw;
             width: 100vw;
             height: 100vh;
-            background-color: transparent; /* 🔥 已修改：設定為透明，讓邊緣透出主畫面 */
-            z-index: 5000; /* 確保浮在所有主畫面元素之上 */
-            transition: right 0.6s cubic-bezier(0.25, 1, 0.5, 1); /* 平滑滑動特效 */
+            background-color: transparent;
+            z-index: 5000;
+            transition: right 0.6s cubic-bezier(0.25, 1, 0.5, 1);
             display: flex;
             justify-content: center;
             align-items: center;
         }
 
-        /* 當面板被啟動時，滑入畫面 */
-        #panel-character.active {
-            right: 0;
+        #panel-character.active { right: 0; }
+        #panel-character img.bg-temp { width: 100%; height: 100%; object-fit: contain; }
+        #back-btn-character { position: absolute; top: 3%; left: 1%; width: 15vw; height: 8vw; cursor: pointer; z-index: 5001; }
+
+        /* =========================================
+           6. 🎮 專屬 Discover 遊戲面板 (獨立架構)
+           ========================================= */
+        #panel-discover {
+            position: fixed;
+            top: 0;
+            left: 100vw; /* 初始藏在右側外 */
+            width: 100vw;
+            height: 100vh;
+            background-color: #000;
+            z-index: 5000;
+            transition: left 0.5s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
-        /* 滿版圖片設定 */
-        #panel-character img.bg-temp {
+        #panel-discover.active { left: 0; }
+
+        #panel-discover iframe {
             width: 100%;
             height: 100%;
-            object-fit: contain; /* 🔥 已修改：設定為 contain，保證圖片 100% 完整不裁切 */
+            border: none;
+            display: block;
         }
 
-        /* 左上角隱形的返回觸控區 (對應圖片上的返回箭頭) */
-        #back-btn-character {
+        #back-btn-discover {
             position: absolute;
-            top: 3%;
-            left: 1%;
-            width: 15vw;
-            height: 8vw;
+            top: 25px;
+            right: 35px;
+            padding: 8px 20px;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 4px;
             cursor: pointer;
             z-index: 5001;
+            font-family: 'Arial', sans-serif;
+            font-size: 14px;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+        }
+
+        #back-btn-discover:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-color: #fff;
         }
     </style>
 </head>
@@ -108,8 +134,13 @@
     <!-- Character 臨時分頁面板 -->
     <div id="panel-character">
         <img src="CharacterTemp.jpg" class="bg-temp" alt="Character Temp Page">
-        <!-- 隱形的點擊區域，用來觸發返回 -->
         <div id="back-btn-character"></div>
+    </div>
+
+    <!-- Discover 遊戲分頁面板 -->
+    <div id="panel-discover">
+        <iframe src="game/index.html"></iframe>
+        <button id="back-btn-discover">BACK</button>
     </div>
 
     <!-- 互動腳本 -->
@@ -121,10 +152,15 @@
             const musicIcon = document.getElementById('music-icon');
             const enterScreen = document.getElementById('enter-screen');
             
-            // 分頁面板變數
+            // Character 面板變數
             const btnCharacter = document.getElementById('btn-character');
             const panelCharacter = document.getElementById('panel-character');
             const backBtnCharacter = document.getElementById('back-btn-character');
+
+            // Discover 面板變數
+            const btnDiscover = document.getElementById('btn-discover');
+            const panelDiscover = document.getElementById('panel-discover');
+            const backBtnDiscover = document.getElementById('back-btn-discover');
             
             bgMusic.volume = 0.5; 
             let isPlaying = false;
@@ -151,13 +187,24 @@
 
             // 點擊 Character 按鈕，滑入面板
             btnCharacter.addEventListener('click', function(e) {
-                e.preventDefault(); // 防止 a 標籤預設跳轉
-                panelCharacter.classList.add('active'); // 加上 active class 觸發 CSS 滑動
+                e.preventDefault();
+                panelCharacter.classList.add('active');
             });
 
-            // 點擊面板左上角返回區塊，滑出面板
+            // 點擊返回，滑出 Character 面板
             backBtnCharacter.addEventListener('click', function() {
-                panelCharacter.classList.remove('active'); // 移除 active class 讓它退回右側
+                panelCharacter.classList.remove('active');
+            });
+
+            // 點擊 Discover 按鈕，滑入遊戲面板
+            btnDiscover.addEventListener('click', function(e) {
+                e.preventDefault();
+                panelDiscover.classList.add('active');
+            });
+
+            // 點擊 BACK 按鈕，滑出遊戲面板
+            backBtnDiscover.addEventListener('click', function() {
+                panelDiscover.classList.remove('active');
             });
         });
     </script>
